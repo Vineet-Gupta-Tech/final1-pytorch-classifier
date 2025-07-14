@@ -2,7 +2,7 @@ import streamlit as st
 from PIL import Image
 import torch
 import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
+import pandas as pd
 import time
 
 # ─── Load Model ─────────────────────────────────────
@@ -18,7 +18,7 @@ st.set_page_config(page_title="🔩 Part Classifier", layout="wide", page_icon="
 st.markdown("<h1 style='text-align: center;'>🔩 AI Mechanical Part Classifier</h1>", unsafe_allow_html=True)
 st.caption("Upload an image to identify bolts, nuts, washers, or locating pins.")
 
-# ─── Sidebar: Upload & Chart Only ──────────────────
+# ─── Sidebar: Upload & Chart ────────────────────────
 st.sidebar.title("🔧 Upload Image")
 file = st.sidebar.file_uploader("📤 Browse image", type=["jpg", "jpeg", "png"])
 
@@ -50,7 +50,7 @@ if file:
             "confidence": conf_score
         })
 
-    # ─── MAIN: Show Image & Prediction Info ──────────
+    # ─── Layout: Image + Predictions ─────────────────
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -65,15 +65,15 @@ if file:
         for name, prob in top4:
             st.write(f"**{name}** — {prob * 100:.2f}%")
 
-# ─── SIDEBAR: Only Chart Below Upload ───────────────
+    # ─── Sidebar Chart (Streamlit-native) ────────────
     st.sidebar.markdown("### 📊 Confidence Chart")
-    fig, ax = plt.subplots(figsize=(3.5, 2.5))
-    ax.bar([x[0] for x in top4], [x[1]*100 for x in top4], color='lightblue')
-    ax.set_ylabel("Confidence (%)", fontsize=8)
-    ax.set_ylim(0, 100)
-    ax.set_title("Per-Class Confidence", fontsize=10)
-    plt.xticks(rotation=10)
-    st.sidebar.pyplot(fig)
+
+    # Create DataFrame for st.bar_chart
+    chart_data = pd.DataFrame({
+        "Confidence (%)": [prob * 100 for _, prob in top4]
+    }, index=[name for name, _ in top4])
+
+    st.sidebar.bar_chart(chart_data)
 
 else:
     st.info("📭 Upload an image from the sidebar to begin.")
